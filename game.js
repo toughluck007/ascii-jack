@@ -54,20 +54,37 @@
     return val;
   }
 
-  function cardString(card) {
-    return `[${card.rank}${card.suit}]`;
+  const suitSymbols = { S: '♠', H: '♥', D: '♦', C: '♣' };
+
+  function cardArt(card) {
+    const w = 7;
+    const top = '┌' + '─'.repeat(w) + '┐';
+    const bottom = '└' + '─'.repeat(w) + '┘';
+    const rank = card.rank;
+    const suit = suitSymbols[card.suit] || card.suit;
+    const line1 = `│${rank.padEnd(w, ' ')}│`;
+    const line2 = `│${' '.repeat((w - 1) / 2)}${suit}${' '.repeat((w - 1) / 2)}│`;
+    const line3 = `│${rank.padStart(w, ' ')}│`;
+    return [top, line1, line2, line3, bottom];
+  }
+
+  function cardBack() {
+    const w = 7;
+    const top = '┌' + '─'.repeat(w) + '┐';
+    const bottom = '└' + '─'.repeat(w) + '┘';
+    const pattern = `│${'░'.repeat(w)}│`;
+    return [top, pattern, pattern, pattern, bottom];
   }
 
   function handString(hand, hideSecond) {
-    let result = '';
+    const lines = ['', '', '', '', ''];
     hand.forEach((card, index) => {
-      if (hideSecond && index === 1) {
-        result += '[??] ';
-      } else {
-        result += cardString(card) + ' ';
-      }
+      const art = hideSecond && index === 1 ? cardBack() : cardArt(card);
+      art.forEach((l, i) => {
+        lines[i] += l + ' ';
+      });
     });
-    return result.trim();
+    return lines.map(l => l.trimEnd()).join('\n');
   }
 
   function updateDisplay() {
@@ -75,14 +92,11 @@
     const playerDiv = document.getElementById('player');
     const statusDiv = document.getElementById('status');
 
-    dealerDiv.textContent = 'Dealer: ' + handString(dealerHand, dealerHidden);
-    playerDiv.textContent = 'Player: ' + handString(playerHand, false) +
-      ' (' + handValue(playerHand) + ')';
+    dealerDiv.textContent = 'Dealer' + (gameOver ? ' (' + handValue(dealerHand) + ')' : '') +
+      '\n' + handString(dealerHand, dealerHidden);
 
-    if (gameOver) {
-      dealerDiv.textContent = 'Dealer: ' + handString(dealerHand, false) +
-        ' (' + handValue(dealerHand) + ')';
-    }
+    playerDiv.textContent = 'Player (' + handValue(playerHand) + ')\n' +
+      handString(playerHand, false);
 
     if (handValue(playerHand) > 21) {
       statusDiv.textContent = 'Player busts! Dealer wins.';
